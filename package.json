@@ -1,0 +1,23 @@
+{
+  "name": "dubai-luxe",
+  "version": "1.0.0",
+  "description": "Luxury Dubai Apartment Rental Website",
+  "main": "index.js",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install-all": "npm install -w frontend -w backend",
+    "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w frontend",
+    "start": "npm start -w backend",
+    "test": "npm test -w frontend && npm test -w backend"
+  },
+  "keywords": ["dubai", "luxury", "apartments", "rental"],
+  "author": "Dubai Luxe",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
