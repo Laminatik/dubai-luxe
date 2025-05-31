@@ -132,27 +132,26 @@ const ReservationForm = ({ apartment, onClose }) => {
     label: `${i + 1} Guest${i > 0 ? 's' : ''}`
   }))
 
+  // ИСПРАВЛЕНО: Создаем единый класс для всех лейблов
+  const labelClass = "block text-sm font-semibold text-gray-700 mb-2 tracking-wide"
+  const inputClass = "w-full px-4 py-3 rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-0 bg-white"
+  const errorClass = "text-red-500 text-xs mt-1 flex items-center break-words"
+
   return (
-    // ИСПРАВЛЕНО: Контейнер формы с правильным overflow
-    <div className="w-full h-full max-w-full overflow-hidden">
+    <div className="w-full max-w-full overflow-hidden">
       <motion.form
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         onSubmit={handleSubmit}
         className="w-full max-w-full"
-        style={{
-          // ИСПРАВЛЕНО: Строгий контроль размеров формы
-          boxSizing: 'border-box',
-          maxWidth: '100%'
-        }}
       >
         <div className="space-y-6 w-full max-w-full">
-          {/* ИСПРАВЛЕН: Apartment Summary с контролем overflow */}
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100 relative overflow-hidden w-full max-w-full">
+          {/* ИСПРАВЛЕНО: Apartment Summary */}
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100 relative w-full overflow-hidden">
             <div className="absolute top-0 right-0 w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-dubai-gold/5 to-transparent rounded-full -mr-10 sm:-mr-12 -mt-10 sm:-mt-12"></div>
-            <div className="relative w-full max-w-full">
+            <div className="relative w-full">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-4">
-                <div className="flex-1 min-w-0 max-w-full">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-playfair font-bold text-lg sm:text-xl mb-2 text-gray-800 break-words leading-tight">
                     {apartment.name}
                   </h3>
@@ -163,7 +162,7 @@ const ReservationForm = ({ apartment, onClose }) => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         </svg>
                       </div>
-                      <span className="truncate max-w-full">{apartment.district}</span>
+                      <span className="break-words">{apartment.district}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 rounded-full bg-dubai-gold/20 flex items-center justify-center flex-shrink-0">
@@ -191,17 +190,17 @@ const ReservationForm = ({ apartment, onClose }) => {
             </div>
           </div>
 
-          {/* ИСПРАВЛЕНО: Form Fields с правильной адаптивной сеткой */}
-          <div className="space-y-4 w-full max-w-full">
-            {/* Personal Information Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full max-w-full">
+          {/* ИСПРАВЛЕНО: Form Fields с единообразными отступами */}
+          <div className="space-y-6 w-full max-w-full">
+            {/* ИСПРАВЛЕНО: Personal Information Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="w-full max-w-full"
+                className="w-full"
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                <label className={labelClass}>
                   Full Name *
                 </label>
                 <input
@@ -209,15 +208,14 @@ const ReservationForm = ({ apartment, onClose }) => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
-                  className={`w-full max-w-full px-4 py-3 rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-0 bg-white ${
+                  className={`${inputClass} ${
                     errors.fullName 
                       ? 'border-red-300 focus:border-red-400' 
                       : 'border-dubai-gold/20 focus:border-dubai-gold hover:border-dubai-gold/40'
                   }`}
                   placeholder="Enter your full name"
-                  style={{ boxSizing: 'border-box' }}
                 />
-                {errors.fullName && <p className="text-red-500 text-xs mt-1 flex items-center break-words">
+                {errors.fullName && <p className={errorClass}>
                   <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -229,9 +227,9 @@ const ReservationForm = ({ apartment, onClose }) => {
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="w-full max-w-full"
+                className="w-full"
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                <label className={labelClass}>
                   Email Address *
                 </label>
                 <input
@@ -239,15 +237,14 @@ const ReservationForm = ({ apartment, onClose }) => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full max-w-full px-4 py-3 rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-0 bg-white ${
+                  className={`${inputClass} ${
                     errors.email 
                       ? 'border-red-300 focus:border-red-400' 
                       : 'border-dubai-gold/20 focus:border-dubai-gold hover:border-dubai-gold/40'
                   }`}
                   placeholder="your@email.com"
-                  style={{ boxSizing: 'border-box' }}
                 />
-                {errors.email && <p className="text-red-500 text-xs mt-1 flex items-center break-words">
+                {errors.email && <p className={errorClass}>
                   <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -256,15 +253,15 @@ const ReservationForm = ({ apartment, onClose }) => {
               </motion.div>
             </div>
 
-            {/* Contact & Guests Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full max-w-full">
+            {/* ИСПРАВЛЕНО: Contact & Guests Row с одинаковыми отступами */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                className="w-full max-w-full"
+                className="w-full"
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                <label className={labelClass}>
                   Phone Number
                 </label>
                 <input
@@ -272,9 +269,8 @@ const ReservationForm = ({ apartment, onClose }) => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full max-w-full px-4 py-3 rounded-2xl border-2 border-dubai-gold/20 focus:border-dubai-gold hover:border-dubai-gold/40 transition-all duration-300 focus:outline-none focus:ring-0 bg-white"
+                  className={`${inputClass} border-dubai-gold/20 focus:border-dubai-gold hover:border-dubai-gold/40`}
                   placeholder="+971 50 123 4567"
-                  style={{ boxSizing: 'border-box' }}
                 />
               </motion.div>
 
@@ -282,16 +278,20 @@ const ReservationForm = ({ apartment, onClose }) => {
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="w-full max-w-full"
+                className="w-full"
               >
+                {/* ИСПРАВЛЕНО: Используем внешний label для согласованности */}
+                <label className={labelClass}>
+                  Number of Guests *
+                </label>
                 <CustomSelect
                   value={formData.guests.toString()}
                   onChange={handleGuestsChange}
                   options={guestOptions}
-                  label="Number of Guests *"
                   placeholder="Select guests"
+                  hideExternalLabel={true}
                 />
-                {errors.guests && <p className="text-red-500 text-xs mt-1 flex items-center break-words">
+                {errors.guests && <p className={errorClass}>
                   <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -300,15 +300,15 @@ const ReservationForm = ({ apartment, onClose }) => {
               </motion.div>
             </div>
 
-            {/* Date Selection Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full max-w-full">
+            {/* ИСПРАВЛЕНО: Date Selection Row с одинаковыми отступами */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                className="w-full max-w-full"
+                className="w-full"
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                <label className={labelClass}>
                   Check-in Date *
                 </label>
                 <CustomDatePicker
@@ -317,8 +317,10 @@ const ReservationForm = ({ apartment, onClose }) => {
                   placeholder="Select check-in date"
                   minDate={new Date().toISOString().split('T')[0]}
                   error={!!errors.arrivalDate}
+                  hideExternalLabel={true}
+                  isInModal={true}
                 />
-                {errors.arrivalDate && <p className="text-red-500 text-xs mt-1 flex items-center break-words">
+                {errors.arrivalDate && <p className={errorClass}>
                   <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -330,9 +332,9 @@ const ReservationForm = ({ apartment, onClose }) => {
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
-                className="w-full max-w-full"
+                className="w-full"
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+                <label className={labelClass}>
                   Check-out Date *
                 </label>
                 <CustomDatePicker
@@ -341,8 +343,10 @@ const ReservationForm = ({ apartment, onClose }) => {
                   placeholder="Select check-out date"
                   minDate={formData.arrivalDate || new Date().toISOString().split('T')[0]}
                   error={!!errors.departureDate}
+                  hideExternalLabel={true}
+                  isInModal={true}
                 />
-                {errors.departureDate && <p className="text-red-500 text-xs mt-1 flex items-center break-words">
+                {errors.departureDate && <p className={errorClass}>
                   <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -356,9 +360,9 @@ const ReservationForm = ({ apartment, onClose }) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.7 }}
-              className="w-full max-w-full"
+              className="w-full"
             >
-              <label className="block text-sm font-semibold text-gray-700 mb-2 tracking-wide">
+              <label className={labelClass}>
                 Special Requests & Preferences
               </label>
               <textarea
@@ -366,9 +370,8 @@ const ReservationForm = ({ apartment, onClose }) => {
                 value={formData.notes}
                 onChange={handleChange}
                 rows={3}
-                className="w-full max-w-full px-4 py-3 rounded-2xl border-2 border-dubai-gold/20 focus:border-dubai-gold hover:border-dubai-gold/40 transition-all duration-300 focus:outline-none focus:ring-0 bg-white resize-none"
+                className={`${inputClass} border-dubai-gold/20 focus:border-dubai-gold hover:border-dubai-gold/40 resize-none`}
                 placeholder="Let us know about any special requirements, dietary preferences, celebration occasions, or personalized services you'd like us to arrange..."
-                style={{ boxSizing: 'border-box' }}
               />
             </motion.div>
           </div>
@@ -379,7 +382,7 @@ const ReservationForm = ({ apartment, onClose }) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.8 }}
-              className="bg-gradient-to-br from-dubai-gold/5 to-dubai-gold/10 rounded-2xl p-4 sm:p-6 border-2 border-dubai-gold/20 w-full max-w-full overflow-hidden"
+              className="bg-gradient-to-br from-dubai-gold/5 to-dubai-gold/10 rounded-2xl p-4 sm:p-6 border-2 border-dubai-gold/20 w-full overflow-hidden"
             >
               <h4 className="font-playfair font-semibold text-lg mb-4 text-gray-800">Reservation Summary</h4>
               <div className="space-y-3">
@@ -407,7 +410,7 @@ const ReservationForm = ({ apartment, onClose }) => {
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 w-full max-w-full overflow-hidden"
+              className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 w-full overflow-hidden"
             >
               <div className="flex items-center">
                 <svg className="w-4 h-4 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -423,22 +426,20 @@ const ReservationForm = ({ apartment, onClose }) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.9 }}
-            className="flex flex-col sm:flex-row gap-3 pt-4 w-full max-w-full"
+            className="flex flex-col sm:flex-row gap-3 pt-4 w-full"
           >
             <button
               type="button"
               onClick={onClose}
-              className="btn-luxury-secondary flex-1 py-3 text-sm w-full max-w-full"
+              className="btn-luxury-secondary flex-1 py-3 text-sm w-full"
               disabled={loading}
-              style={{ boxSizing: 'border-box' }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-luxury-primary flex-1 py-3 text-sm flex items-center justify-center w-full max-w-full"
-              style={{ boxSizing: 'border-box' }}
+              className="btn-luxury-primary flex-1 py-3 text-sm flex items-center justify-center w-full"
             >
               {loading ? (
                 <>
@@ -456,7 +457,7 @@ const ReservationForm = ({ apartment, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 1 }}
-            className="text-center space-y-2 w-full max-w-full"
+            className="text-center space-y-2 w-full"
           >
             <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 flex-wrap gap-2">
               <div className="flex items-center space-x-1">

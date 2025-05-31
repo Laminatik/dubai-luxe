@@ -19,6 +19,7 @@ dubai-luxe/
 │   │   │   ├── img2.png
 │   │   │   ├── ... (img3.png through img10.png)
 │   │   │   └── dubai-skyline-hero.mp4 (hero video - optional)
+│   │   ├── icons/
 │   │   └── favicon.ico
 │   └── src/
 │       ├── main.jsx
@@ -34,6 +35,7 @@ dubai-luxe/
 │       │   │   ├── CustomDatePicker.jsx
 │       │   │   ├── CustomSelect.jsx
 │       │   │   ├── PriceRangeSlider.jsx
+│       │   │   ├── LuxuryIcon.jsx
 │       │   │   └── LoadingSpinner.jsx
 │       │   └── Apartment/
 │       │       ├── ApartmentCard.jsx
@@ -63,8 +65,7 @@ dubai-luxe/
 │   │   └── apartments.json
 │   └── middleware/
 │       └── rateLimiter.js
-├── .env
-└── zindex-guide.md
+└── .env
 ```
 
 ## Image Placement Instructions

@@ -110,7 +110,52 @@ export default {
         'toast': '10002',
         'debug': '99999',
       },
+      // НОВОЕ: Добавляем поддержку overflow-clip
+      overflow: {
+        'clip': 'clip',
+      }
     },
   },
-  plugins: [],
+  plugins: [
+    // НОВОЕ: Кастомный плагин для поддержки overflow-clip во всех браузерах
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.overflow-x-clip': {
+          'overflow-x': 'clip',
+          // Fallback для старых браузеров
+          '@supports not (overflow-x: clip)': {
+            'overflow-x': 'hidden',
+          }
+        },
+        '.overflow-y-clip': {
+          'overflow-y': 'clip',
+          // Fallback для старых браузеров
+          '@supports not (overflow-y: clip)': {
+            'overflow-y': 'hidden',
+          }
+        },
+        '.overflow-clip': {
+          'overflow': 'clip',
+          // Fallback для старых браузеров
+          '@supports not (overflow: clip)': {
+            'overflow': 'hidden',
+          }
+        },
+        // Утилиты специально для работы со sticky
+        '.sticky-safe': {
+          'position': 'sticky',
+          'position': '-webkit-sticky', // Safari префикс
+        },
+        '.overflow-sticky-safe': {
+          // Безопасный overflow для sticky элементов
+          'overflow-x': 'clip',
+          '@supports not (overflow-x: clip)': {
+            'overflow-x': 'visible',
+          }
+        }
+      }
+      
+      addUtilities(newUtilities, ['responsive', 'hover'])
+    }
+  ],
 }

@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const ApartmentGallery = ({ images }) => {
   const [selectedImage, setSelectedImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [touchStart, setTouchStart] = useState(null)
+  const [touchEnd, setTouchEnd] = useState(null)
+  const lightboxRef = useRef(null)
 
+  // ИСПРАВЛЕНО: Детекция мобильных устройств
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -17,32 +21,132 @@ const ApartmentGallery = ({ images }) => {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // ИСПРАВЛЕНО: Правильная блокировка скролла с компенсацией scrollbar
+  useEffect(() => {
+    if (isLightboxOpen) {
+      // Получаем ширину scrollbar
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+      const scrollY = window.scrollY
+      
+      // Сохраняем текущие стили
+      const originalStyles = {
+        bodyOverflow: document.body.style.overflow,
+        bodyPosition: document.body.style.position,
+        bodyTop: document.body.style.top,
+        bodyLeft: document.body.style.left,
+        bodyRight: document.body.style.right,
+        bodyWidth: document.body.style.width,
+        bodyPaddingRight: document.body.style.paddingRight,
+        htmlOverflow: document.documentElement.style.overflow
+      }
+      
+      // КРИТИЧНО: Блокируем скролл на всех уровнях
+      document.documentElement.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.left = '0'
+      document.body.style.right = '0'
+      document.body.style.width = '100%'
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+      
+      // Сохраняем для восстановления
+      document.body.dataset.scrollY = scrollY.toString()
+      document.body.dataset.originalStyles = JSON.stringify(originalStyles)
+      
+      return () => {
+        // Восстанавливаем стили
+        const savedScrollY = parseInt(document.body.dataset.scrollY || '0')
+        const savedStyles = JSON.parse(document.body.dataset.originalStyles || '{}')
+        
+        document.documentElement.style.overflow = savedStyles.htmlOverflow || ''
+        document.body.style.overflow = savedStyles.bodyOverflow || ''
+        document.body.style.position = savedStyles.bodyPosition || ''
+        document.body.style.top = savedStyles.bodyTop || ''
+        document.body.style.left = savedStyles.bodyLeft || ''
+        document.body.style.right = savedStyles.bodyRight || ''
+        document.body.style.width = savedStyles.bodyWidth || ''
+        document.body.style.paddingRight = savedStyles.bodyPaddingRight || ''
+        
+        // Восстанавливаем позицию скролла
+        if (savedScrollY > 0) {
+          window.scrollTo({
+            top: savedScrollY,
+            left: 0,
+            behavior: 'instant'
+          })
+        }
+        
+        // Очищаем временные данные
+        delete document.body.dataset.scrollY
+        delete document.body.dataset.originalStyles
+      }
+    }
+  }, [isLightboxOpen])
+
+  // ИСПРАВЛЕНО: Улучшенное управление клавиатурой
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isLightboxOpen) return
       
-      if (e.key === 'Escape') {
-        setIsLightboxOpen(false)
-      } else if (e.key === 'ArrowLeft') {
-        prevImage()
-      } else if (e.key === 'ArrowRight') {
-        nextImage()
+      // Предотвращаем дефолтное поведение для наших клавиш
+      if (['Escape', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+      
+      switch (e.key) {
+        case 'Escape':
+          setIsLightboxOpen(false)
+          break
+        case 'ArrowLeft':
+          prevImage()
+          break
+        case 'ArrowRight':
+          nextImage()
+          break
+        default:
+          break
       }
     }
 
     if (isLightboxOpen) {
-      document.addEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
+      document.addEventListener('keydown', handleKeyDown, { capture: true })
     }
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = 'unset'
+      document.removeEventListener('keydown', handleKeyDown, { capture: true })
     }
   }, [isLightboxOpen])
 
+  // ИСПРАВЛЕНО: Touch navigation для мобильных
+  const handleTouchStart = (e) => {
+    if (!isLightboxOpen) return
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e) => {
+    if (!isLightboxOpen) return
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe && images.length > 1) {
+      nextImage()
+    }
+    if (isRightSwipe && images.length > 1) {
+      prevImage()
+    }
+  }
+
+  // ИСПРАВЛЕНО: Навигация с предотвращением проблем
   const nextImage = () => {
     setSelectedImage((prev) => (prev + 1) % images.length)
   }
@@ -54,6 +158,41 @@ const ApartmentGallery = ({ images }) => {
   const openLightbox = (index) => {
     setSelectedImage(index)
     setIsLightboxOpen(true)
+  }
+
+  const closeLightbox = () => {
+    setIsLightboxOpen(false)
+  }
+
+  // ИСПРАВЛЕНО: Безопасные обработчики кнопок навигации
+  const handlePrevClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    prevImage()
+  }
+
+  const handleNextClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    nextImage()
+  }
+
+  const handleLightboxPrevClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    prevImage()
+  }
+
+  const handleLightboxNextClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    nextImage()
+  }
+
+  const handleLightboxClose = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    closeLightbox()
   }
 
   return (
@@ -74,6 +213,7 @@ const ApartmentGallery = ({ images }) => {
                 src={image}
                 alt={`Luxury apartment view ${index + 1}`}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                draggable={false}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
@@ -101,34 +241,44 @@ const ApartmentGallery = ({ images }) => {
           ))}
         </div>
 
-        {/* Navigation Arrows */}
+        {/* ИСПРАВЛЕНО: Navigation Arrows с правильным positioning */}
         {images.length > 1 && (
           <>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={prevImage}
-              className="absolute left-4 sm:left-6 top-1/2 transform -translate-y-1/2 luxury-glass rounded-full p-3 sm:p-4 shadow-luxury transition-all duration-300 hover:bg-white/20 border border-white/20 group"
+            <button
+              onClick={handlePrevClick}
+              className="absolute left-4 sm:left-6 top-1/2 transform -translate-y-1/2 luxury-glass rounded-full p-3 sm:p-4 shadow-luxury transition-all duration-300 hover:bg-white/20 border border-white/20 group hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
+              style={{ 
+                zIndex: 20,
+                userSelect: 'none',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
             >
               <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white group-hover:text-dubai-gold transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={nextImage}
-              className="absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 luxury-glass rounded-full p-3 sm:p-4 shadow-luxury transition-all duration-300 hover:bg-white/20 border border-white/20 group"
+            </button>
+            <button
+              onClick={handleNextClick}
+              className="absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 luxury-glass rounded-full p-3 sm:p-4 shadow-luxury transition-all duration-300 hover:bg-white/20 border border-white/20 group hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
+              style={{ 
+                zIndex: 20,
+                userSelect: 'none',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
             >
               <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white group-hover:text-dubai-gold transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </motion.button>
+            </button>
           </>
         )}
 
         {/* Image Counter */}
-        <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 luxury-glass px-3 sm:px-4 py-2 rounded-full border border-white/20">
+        <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 luxury-glass px-3 sm:px-4 py-2 rounded-full border border-white/20" style={{ zIndex: 20 }}>
           <span className="text-white font-medium text-sm">
             {selectedImage + 1} of {images.length}
           </span>
@@ -136,16 +286,17 @@ const ApartmentGallery = ({ images }) => {
 
         {/* Image Indicators */}
         {images.length > 1 && (
-          <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
+          <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2" style={{ zIndex: 20 }}>
             {images.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setSelectedImage(index)}
-                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
+                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 focus:outline-none ${
                   selectedImage === index 
                     ? 'bg-dubai-gold shadow-lg scale-125' 
                     : 'bg-white/40 hover:bg-white/60'
                 }`}
+                onMouseDown={(e) => e.preventDefault()}
               />
             ))}
           </div>
@@ -163,16 +314,18 @@ const ApartmentGallery = ({ images }) => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedImage(index)}
-                  className={`flex-shrink-0 w-20 h-12 sm:w-24 sm:h-16 md:w-32 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                  className={`flex-shrink-0 w-20 h-12 sm:w-24 sm:h-16 md:w-32 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 focus:outline-none ${
                     selectedImage === index 
                       ? 'border-dubai-gold shadow-luxury scale-105' 
                       : 'border-white/20 hover:border-dubai-gold/50 hover:shadow-lg'
                   }`}
+                  onMouseDown={(e) => e.preventDefault()}
                 >
                   <img
                     src={image}
                     alt={`Thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"
+                    draggable={false}
                   />
                 </motion.button>
               ))}
@@ -181,15 +334,28 @@ const ApartmentGallery = ({ images }) => {
         </div>
       )}
 
-      {/* Premium Lightbox Modal */}
+      {/* ИСПРАВЛЕНО: Premium Lightbox Modal с максимальным z-index */}
       <AnimatePresence>
         {isLightboxOpen && (
           <motion.div
+            ref={lightboxRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-2 sm:p-4"
-            onClick={() => setIsLightboxOpen(false)}
+            className="fixed inset-0 bg-black/95 flex items-center justify-center p-2 sm:p-4"
+            style={{ 
+              zIndex: 99999, // КРИТИЧНО: Максимальный z-index выше navbar
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh'
+            }}
+            onClick={closeLightbox}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -198,53 +364,75 @@ const ApartmentGallery = ({ images }) => {
               transition={{ duration: 0.3 }}
               className="relative max-w-full max-h-full flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
+              style={{ zIndex: 100000 }}
             >
               <img
                 src={images[selectedImage]}
                 alt={`Full view ${selectedImage + 1}`}
                 className="max-w-full max-h-[90vh] sm:max-h-[85vh] object-contain rounded-xl sm:rounded-2xl shadow-luxury"
+                draggable={false}
+                style={{ 
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  WebkitTouchCallout: 'none'
+                }}
               />
 
-              {/* Close Button */}
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setIsLightboxOpen(false)}
-                className="absolute top-2 right-2 sm:top-4 sm:right-4 luxury-glass rounded-full p-2 sm:p-3 transition-colors duration-300 hover:bg-white/20 border border-white/20"
+              {/* ИСПРАВЛЕНО: Close Button с правильным z-index */}
+              <button
+                onClick={handleLightboxClose}
+                className="absolute top-2 right-2 sm:top-4 sm:right-4 luxury-glass rounded-full p-2 sm:p-3 transition-colors duration-300 hover:bg-white/20 border border-white/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
+                style={{ 
+                  zIndex: 100001,
+                  userSelect: 'none',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => e.preventDefault()}
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </motion.button>
+              </button>
 
-              {/* Navigation in Lightbox */}
+              {/* ИСПРАВЛЕНО: Navigation in Lightbox с правильным positioning */}
               {images.length > 1 && (
                 <>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                    className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 luxury-glass rounded-full p-3 sm:p-4 transition-colors duration-300 hover:bg-white/20 border border-white/20"
+                  <button
+                    onClick={handleLightboxPrevClick}
+                    className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 luxury-glass rounded-full p-3 sm:p-4 transition-colors duration-300 hover:bg-white/20 border border-white/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    style={{ 
+                      zIndex: 100001,
+                      userSelect: 'none',
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onTouchStart={(e) => e.preventDefault()}
                   >
                     <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                    className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 luxury-glass rounded-full p-3 sm:p-4 transition-colors duration-300 hover:bg-white/20 border border-white/20"
+                  </button>
+                  <button
+                    onClick={handleLightboxNextClick}
+                    className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 luxury-glass rounded-full p-3 sm:p-4 transition-colors duration-300 hover:bg-white/20 border border-white/20 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    style={{ 
+                      zIndex: 100001,
+                      userSelect: 'none',
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onTouchStart={(e) => e.preventDefault()}
                   >
                     <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                  </motion.button>
+                  </button>
                 </>
               )}
 
               {/* Image Counter in Lightbox */}
-              <div className="absolute bottom-2 sm:bottom-4 left-1/2 transform -translate-x-1/2 luxury-glass px-3 sm:px-6 py-2 sm:py-3 rounded-full border border-white/20">
+              <div className="absolute bottom-2 sm:bottom-4 left-1/2 transform -translate-x-1/2 luxury-glass px-3 sm:px-6 py-2 sm:py-3 rounded-full border border-white/20" style={{ zIndex: 100001 }}>
                 <span className="text-white font-medium text-sm sm:text-base">
                   {selectedImage + 1} of {images.length}
                 </span>
@@ -252,7 +440,7 @@ const ApartmentGallery = ({ images }) => {
 
               {/* Premium Gallery Info - только на десктопе */}
               {!isMobile && (
-                <div className="absolute top-4 left-4 luxury-glass px-4 py-2 rounded-full border border-white/20">
+                <div className="absolute top-4 left-4 luxury-glass px-4 py-2 rounded-full border border-white/20" style={{ zIndex: 100001 }}>
                   <span className="text-white text-sm font-medium">
                     Premium Gallery View
                   </span>
@@ -260,7 +448,7 @@ const ApartmentGallery = ({ images }) => {
               )}
             </motion.div>
 
-            {/* Keyboard Navigation Hint - только на десктопе */}
+            {/* ИСПРАВЛЕНО: Keyboard Navigation Hint - только на десктопе */}
             {!isMobile && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -268,6 +456,7 @@ const ApartmentGallery = ({ images }) => {
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ delay: 0.2 }}
                 className="absolute bottom-8 left-8 luxury-glass px-4 py-2 rounded-full border border-white/20"
+                style={{ zIndex: 100001 }}
               >
                 <div className="flex items-center space-x-4 text-white text-sm">
                   <div className="flex items-center space-x-1">
@@ -283,7 +472,7 @@ const ApartmentGallery = ({ images }) => {
               </motion.div>
             )}
 
-            {/* Mobile Close Hint - переработанная */}
+            {/* Mobile Instructions */}
             {isMobile && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -291,25 +480,34 @@ const ApartmentGallery = ({ images }) => {
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ delay: 0.2 }}
                 className="absolute top-4 left-4 luxury-glass px-3 py-1 rounded-full border border-white/20"
+                style={{ zIndex: 100001 }}
               >
-                <span className="text-white text-xs">Tap outside to close</span>
+                <span className="text-white text-xs">Tap outside to close • Swipe to navigate</span>
               </motion.div>
             )}
 
-            {/* Мобильная подсказка - теперь ПОД фоткой */}
+            {/* ИСПРАВЛЕНО: Swipe indicator для мобильных */}
             {isMobile && images.length > 1 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                transition={{ delay: 0.5, duration: 0.3 }}
+                transition={{ delay: 0.5, duration: 3 }}
                 className="absolute bottom-20 sm:bottom-24 left-1/2 transform -translate-x-1/2 luxury-glass px-4 py-2 rounded-full border border-white/20"
+                style={{ zIndex: 100001 }}
               >
                 <div className="flex items-center space-x-2 text-white text-xs">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <motion.svg 
+                    className="w-4 h-4" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                    animate={{ x: [-5, 5, -5] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18M17 8l4 4m0 0l-4 4" />
-                  </svg>
-                  <span>Swipe or use arrows</span>
+                  </motion.svg>
+                  <span>Swipe to navigate</span>
                 </div>
               </motion.div>
             )}

@@ -11,7 +11,8 @@
   
   html {
     scroll-behavior: smooth;
-    overflow-x: hidden; /* ИСПРАВЛЕНО: предотвращение горизонтального скролла */
+    /* ИСПРАВЛЕНО: overflow-x: hidden ломает position: sticky! Заменено на clip */
+    overflow-x: clip;
     width: 100%;
     max-width: 100vw;
   }
@@ -21,7 +22,8 @@
     color: #000000;
     background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
     min-height: 100vh;
-    overflow-x: hidden; /* ИСПРАВЛЕНО: предотвращение горизонтального скролла */
+    /* ИСПРАВЛЕНО: overflow-x: hidden ломает position: sticky! Заменено на clip */
+    overflow-x: clip;
     width: 100%;
     max-width: 100vw;
     -webkit-font-smoothing: antialiased;
@@ -40,7 +42,8 @@
 
   /* ИСПРАВЛЕНО: Предотвращение горизонтального скролла */
   #root {
-    overflow-x: hidden;
+    /* КРИТИЧНО: overflow-x: hidden ломает sticky! Заменено на clip */
+    overflow-x: clip;
     width: 100%;
     max-width: 100vw;
     position: relative;
@@ -94,6 +97,28 @@
     box-shadow: 
       0 25px 60px rgba(0,0,0,0.15),
       0 10px 30px rgba(201,163,81,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+
+  /* НОВОЕ: Специальный класс для области фильтров без выраженных теней */
+  .filters-card {
+    @apply bg-white/95 backdrop-blur-sm border border-gray-100/50 transition-all duration-300;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
+    /* ИСПРАВЛЕНО: Минимальные тени для фильтров */
+    box-shadow: 
+      0 2px 8px rgba(0,0,0,0.04),
+      0 1px 4px rgba(201,163,81,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    overflow: hidden;
+    word-wrap: break-word;
+    position: relative;
+  }
+
+  .filters-card:hover {
+    /* ИСПРАВЛЕНО: Убрали трансформацию и сильные тени для фильтров */
+    box-shadow: 
+      0 4px 12px rgba(0,0,0,0.06),
+      0 2px 6px rgba(201,163,81,0.08),
       inset 0 1px 0 rgba(255,255,255,0.9);
   }
   
@@ -179,10 +204,12 @@
     width: 120%;
   }
   
-  /* ИСПРАВЛЕННЫЕ КНОПКИ */
+  /* ИСПРАВЛЕННЫЕ КНОПКИ с новым переливающимся эффектом */
   .btn-luxury-primary {
     @apply relative overflow-hidden px-6 sm:px-8 lg:px-10 py-3 sm:py-4 text-white font-semibold tracking-wider transition-all duration-500;
-    background: linear-gradient(135deg, #C9A351 0%, #E8C168 50%, #C9A351 100%);
+    /* ИСПРАВЛЕНО: Добавляем переливающийся градиент вместо движущейся полосы */
+    background: linear-gradient(135deg, #C9A351 0%, #E8C168 25%, #C9A351 50%, #E8C168 75%, #C9A351 100%);
+    background-size: 300% 100%;
     border: 1px solid rgba(255,255,255,0.2);
     box-shadow: 
       0 8px 25px rgba(201,163,81,0.3),
@@ -196,22 +223,8 @@
     /* ИСПРАВЛЕНО: Контроль содержимого */
     max-width: 100%;
     word-wrap: break-word;
-  }
-  
-  .btn-luxury-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.8s;
-    border-radius: 1rem;
-  }
-  
-  .btn-luxury-primary:hover::before {
-    left: 100%;
+    /* НОВОЕ: Анимация переливания градиента */
+    animation: luxury-shimmer 3s ease-in-out infinite;
   }
   
   .btn-luxury-primary:hover {
@@ -219,6 +232,11 @@
     box-shadow: 
       0 15px 35px rgba(201,163,81,0.4),
       inset 0 1px 0 rgba(255,255,255,0.3);
+    /* ИСПРАВЛЕНО: Ускоряем переливание при hover */
+    animation: luxury-shimmer 1.5s ease-in-out infinite;
+    /* НОВОЕ: Дополнительный блеск при hover */
+    background: linear-gradient(135deg, #C9A351 0%, #E8C168 20%, #F5D682 40%, #E8C168 60%, #C9A351 80%, #E8C168 100%);
+    background-size: 400% 100%;
   }
   
   /* ИСПРАВЛЕННАЯ ВТОРИЧНАЯ КНОПКА */
@@ -246,7 +264,8 @@
     left: 0;
     width: 0;
     height: 100%;
-    background: linear-gradient(135deg, #C9A351 0%, #E8C168 100%);
+    /* ИСПРАВЛЕНО: Тоже добавляем переливающийся градиент */
+    background: linear-gradient(135deg, #C9A351 0%, #E8C168 50%, #C9A351 100%);
     transition: width 0.5s ease;
     z-index: -1;
     border-radius: 0.875rem;
@@ -254,6 +273,10 @@
   
   .btn-luxury-secondary:hover::before {
     width: 100%;
+    /* НОВОЕ: При hover тоже добавляем переливание */
+    background: linear-gradient(135deg, #C9A351 0%, #E8C168 25%, #F5D682 50%, #E8C168 75%, #C9A351 100%);
+    background-size: 200% 100%;
+    animation: luxury-shimmer 2s ease-in-out infinite;
   }
   
   .btn-luxury-secondary:hover {
@@ -486,6 +509,23 @@
     background: radial-gradient(ellipse at center, var(--tw-gradient-stops));
   }
 
+  /* НОВЫЕ утилиты с переливанием */
+  .bg-gradient-shimmer {
+    background: linear-gradient(135deg, #C9A351 0%, #E8C168 25%, #C9A351 50%, #E8C168 75%, #C9A351 100%);
+    background-size: 300% 100%;
+    animation: luxury-shimmer 3s ease-in-out infinite;
+  }
+
+  .gold-gradient-shimmer {
+    background: linear-gradient(135deg, #C9A351 0%, #E8C168 30%, #F5D682 50%, #E8C168 70%, #C9A351 100%);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: luxury-shimmer 4s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(201,163,81,0.3));
+  }
+
   /* ИСПРАВЛЕНО: Z-index стеки */
   .z-navigation {
     z-index: 50;
@@ -540,7 +580,8 @@
   }
 
   .no-overflow-x {
-    overflow-x: hidden !important;
+    /* ИСПРАВЛЕНО: Заменено на clip для совместимости со sticky */
+    overflow-x: clip !important;
   }
 
   .break-words {
@@ -693,6 +734,19 @@
   }
 }
 
+/* НОВАЯ анимация переливания градиента */
+@keyframes luxury-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* НОВАЯ анимация для text overflow */
 @keyframes text-scroll {
   0% {
@@ -725,6 +779,19 @@
     @apply transform-none shadow-xl;
   }
 
+  /* ИСПРАВЛЕНО: Фильтры остаются без сильных теней на мобильных */
+  .filters-card {
+    box-shadow: 
+      0 1px 4px rgba(0,0,0,0.03),
+      0 1px 2px rgba(201,163,81,0.04);
+  }
+
+  .filters-card:hover {
+    box-shadow: 
+      0 2px 6px rgba(0,0,0,0.04),
+      0 1px 3px rgba(201,163,81,0.06);
+  }
+
   /* Уменьшение анимаций на мобильных для производительности */
   .floating-elements::before,
   .floating-elements::after {
@@ -740,6 +807,23 @@
   /* ИСПРАВЛЕНО: Мобильная безопасность */
   .max-w-7xl {
     max-width: calc(100vw - 2rem);
+  }
+
+  /* Уменьшаем интенсивность анимации переливания на мобильных */
+  .btn-luxury-primary {
+    animation: luxury-shimmer 4s ease-in-out infinite;
+  }
+  
+  .btn-luxury-primary:hover {
+    animation: luxury-shimmer 2.5s ease-in-out infinite;
+  }
+
+  .bg-gradient-shimmer {
+    animation: luxury-shimmer 5s ease-in-out infinite;
+  }
+
+  .gold-gradient-shimmer {
+    animation: luxury-shimmer 6s ease-in-out infinite;
   }
 }
 
@@ -758,11 +842,20 @@
       0 6px 25px rgba(201,163,81,0.1),
       inset 0 1px 0 rgba(255,255,255,0.2);
   }
+
+  /* ИСПРАВЛЕНО: Фильтры остаются с минимальными тенями даже на больших экранах */
+  .filters-card {
+    box-shadow: 
+      0 3px 10px rgba(0,0,0,0.05),
+      0 2px 5px rgba(201,163,81,0.06),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+  }
 }
 
 /* Печать */
 @media print {
   .luxury-card,
+  .filters-card,
   .luxury-glass {
     box-shadow: none !important;
     background: white !important;
@@ -773,6 +866,14 @@
     color: #C9A351 !important;
     -webkit-text-fill-color: unset !important;
   }
+
+  /* Отключаем анимации при печати */
+  .btn-luxury-primary,
+  .btn-luxury-secondary:hover::before,
+  .bg-gradient-shimmer,
+  .gold-gradient-shimmer {
+    animation: none !important;
+  }
 }
 
 /* Дополнительные утилиты для доступности */
@@ -782,11 +883,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  /* Отключаем переливание при prefers-reduced-motion */
+  .btn-luxury-primary,
+  .btn-luxury-secondary:hover::before,
+  .bg-gradient-shimmer,
+  .gold-gradient-shimmer {
+    animation: none !important;
+  }
 }
 
 /* Темная тема (базовая поддержка) */
 @media (prefers-color-scheme: dark) {
-  .luxury-card {
+  .luxury-card,
+  .filters-card {
     background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
     border-color: rgba(255,255,255,0.1);
   }
@@ -819,12 +929,182 @@
 .container-safe {
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
+  /* ИСПРАВЛЕНО: заменено на clip для работы со sticky */
+  overflow-x: clip;
   box-sizing: border-box;
 }
 
 .max-w-7xl {
   max-width: min(80rem, calc(100vw - 2rem));
+}
+
+/* ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ИСПРАВЛЕНИЯ СКРОЛЛА В МОДАЛАХ */
+
+/* Улучшенный скроллбар для модального контента */
+.modal-scroll,
+.modal-content-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #C9A351 rgba(245, 245, 245, 0.3);
+}
+
+.modal-scroll::-webkit-scrollbar,
+.modal-content-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.modal-scroll::-webkit-scrollbar-track,
+.modal-content-scroll::-webkit-scrollbar-track {
+  background: rgba(245, 245, 245, 0.3);
+  border-radius: 8px;
+}
+
+.modal-scroll::-webkit-scrollbar-thumb,
+.modal-content-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #C9A351, #E8C168);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.modal-scroll::-webkit-scrollbar-thumb:hover,
+.modal-content-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #a9862f, #C9A351);
+  box-shadow: 0 2px 8px rgba(201,163,81,0.4);
+}
+
+/* Исправленные стили для модального окна */
+.modal-container {
+  /* Убеждаемся что модальный контейнер может скроллиться */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: 100vh !important;
+  scroll-behavior: smooth;
+}
+
+.modal-content {
+  /* Позволяем контенту растягиваться по высоте */
+  min-height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Плавная анимация скролла */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Утилиты для правильного скролла */
+.scroll-auto {
+  overflow: auto !important;
+}
+
+.scroll-y-auto {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.scroll-x-hidden {
+  overflow-x: hidden !important;
+}
+
+/* Исправления для форм в модалах */
+.form-in-modal {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  position: relative;
+}
+
+.form-in-modal .form-field {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Dropdown внутри модала */
+.dropdown-in-modal {
+  position: relative;
+  z-index: 10001; /* Выше модала */
+}
+
+/* Исправления для iOS */
+@supports (-webkit-touch-callout: none) {
+  .modal-scroll,
+  .modal-content-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Медиа-запросы для мобильных устройств */
+@media (max-width: 768px) {
+  .modal-container {
+    padding: 1rem !important;
+  }
+  
+  .modal-content {
+    border-radius: 1rem !important;
+    margin: 0 !important;
+  }
+  
+  /* Увеличиваем область скроллбара на мобильных */
+  .modal-scroll::-webkit-scrollbar,
+  .modal-content-scroll::-webkit-scrollbar {
+    width: 12px;
+  }
+}
+
+/* Высококонтрастная тема */
+@media (prefers-contrast: high) {
+  .modal-scroll::-webkit-scrollbar-thumb,
+  .modal-content-scroll::-webkit-scrollbar-thumb {
+    background: #C9A351 !important;
+  }
+}
+
+/* Анимация для плавного появления скроллбара */
+.modal-scroll,
+.modal-content-scroll {
+  transition: scrollbar-color 0.3s ease;
+}
+
+/* Hover эффекты для области скролла */
+.modal-scroll:hover::-webkit-scrollbar-thumb,
+.modal-content-scroll:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #D4AD5A, #F5D682);
+}
+
+/* Убираем скроллбар во время загрузки */
+.modal-loading {
+  overflow: hidden !important;
+}
+
+.modal-loading .modal-scroll,
+.modal-loading .modal-content-scroll {
+  overflow: hidden !important;
+}
+
+/* Стили для контейнера с правильным flex */
+.modal-flex-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Позволяет flex детям сжиматься */
+  height: 100%;
+}
+
+.modal-flex-content {
+  flex: 1;
+  min-height: 0; /* Критично для работы скролла */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Исправления для Safari */
+@supports (-webkit-appearance: none) {
+  .modal-scroll,
+  .modal-content-scroll {
+    scrollbar-width: auto;
+  }
 }
 
 /* ИСПРАВЛЕНИЕ Z-INDEX СТЕКОВ */
@@ -834,3 +1114,4 @@
 .z-modal { z-index: 100; }
 .z-sidebar { z-index: 30; }
 .z-mobile-button { z-index: 40; }
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import ApartmentGrid from '../components/Apartment/ApartmentGrid'
@@ -11,11 +11,25 @@ const Apartments = () => {
   const [filters, setFilters] = useState({
     bedrooms: '',
     district: '',
-    priceRange: [0, 5000] // ИЗМЕНЕНО: Теперь массив для range slider
+    priceRange: [0, 5000]
   })
   const [loading, setLoading] = useState(true)
   const [showFilters, setShowFilters] = useState(false)
   const [headerRef, headerInView] = useInView({ threshold: 0.2, triggerOnce: true })
+
+  // ИСПРАВЛЕНО: Мемоизированные вычисления для стабильности
+  const maxPriceFromData = useMemo(() => {
+    if (apartments.length === 0) return 4200
+    return Math.max(...apartments.map(apt => apt.priceNight))
+  }, [apartments])
+
+  const districts = useMemo(() => {
+    return [...new Set(apartments.map(apt => apt.district))]
+  }, [apartments])
+
+  const bedroomOptions = useMemo(() => {
+    return [...new Set(apartments.map(apt => apt.bedrooms))].sort()
+  }, [apartments])
 
   useEffect(() => {
     fetch('/api/apartments')
@@ -25,9 +39,12 @@ const Apartments = () => {
         setFilteredApartments(data)
         setLoading(false)
         
-        // НОВОЕ: Устанавливаем максимальную цену на основе данных
+        // ИСПРАВЛЕНО: Устанавливаем максимальную цену только один раз
         const maxPrice = Math.max(...data.map(apt => apt.priceNight))
-        setFilters(prev => ({ ...prev, priceRange: [0, maxPrice + 500] }))
+        setFilters(prev => ({ 
+          ...prev, 
+          priceRange: [0, maxPrice + 500] 
+        }))
       })
       .catch(err => {
         console.error('Error fetching apartments:', err)
@@ -35,62 +52,80 @@ const Apartments = () => {
       })
   }, [])
 
+  // ИСПРАВЛЕНО: Оптимизированный фильтр с debounce эффектом
   useEffect(() => {
-    let filtered = apartments
+    const timeoutId = setTimeout(() => {
+      let filtered = apartments
 
-    if (filters.bedrooms) {
-      filtered = filtered.filter(apt => apt.bedrooms === parseInt(filters.bedrooms))
-    }
+      if (filters.bedrooms) {
+        filtered = filtered.filter(apt => apt.bedrooms === parseInt(filters.bedrooms))
+      }
 
-    if (filters.district) {
-      filtered = filtered.filter(apt => apt.district === filters.district)
-    }
+      if (filters.district) {
+        filtered = filtered.filter(apt => apt.district === filters.district)
+      }
 
-    // ИЗМЕНЕНО: Новая логика для price range
-    if (filters.priceRange && filters.priceRange.length === 2) {
-      const [min, max] = filters.priceRange
-      filtered = filtered.filter(apt => {
-        return apt.priceNight >= min && apt.priceNight <= max
-      })
-    }
+      if (filters.priceRange && filters.priceRange.length === 2) {
+        const [min, max] = filters.priceRange
+        filtered = filtered.filter(apt => {
+          return apt.priceNight >= min && apt.priceNight <= max
+        })
+      }
 
-    setFilteredApartments(filtered)
+      setFilteredApartments(filtered)
+    }, 50) // 50ms debounce для плавности
+
+    return () => clearTimeout(timeoutId)
   }, [filters, apartments])
 
-  const districts = [...new Set(apartments.map(apt => apt.district))]
-  const bedroomOptions = [...new Set(apartments.map(apt => apt.bedrooms))].sort()
-
-  const clearFilters = () => {
-    const maxPrice = apartments.length > 0 ? Math.max(...apartments.map(apt => apt.priceNight)) + 500 : 5000
+  // ИСПРАВЛЕНО: Мемоизированные функции для предотвращения ререндеров
+  const clearFilters = useCallback(() => {
+    const maxPrice = maxPriceFromData + 500
     setFilters({ 
       bedrooms: '', 
       district: '', 
       priceRange: [0, maxPrice] 
     })
-  }
+  }, [maxPriceFromData])
 
-  // ИЗМЕНЕНО: Проверка активных фильтров
-  const hasActiveFilters = filters.bedrooms || filters.district || 
-    (filters.priceRange && (filters.priceRange[0] > 0 || filters.priceRange[1] < (apartments.length > 0 ? Math.max(...apartments.map(apt => apt.priceNight)) + 500 : 5000)))
+  // ИСПРАВЛЕНО: Оптимизированные обработчики изменений
+  const handleBedroomsChange = useCallback((value) => {
+    setFilters(prev => ({ ...prev, bedrooms: value }))
+  }, [])
 
-  // Options for selects
-  const bedroomSelectOptions = [
+  const handleDistrictChange = useCallback((value) => {
+    setFilters(prev => ({ ...prev, district: value }))
+  }, [])
+
+  // КРИТИЧНО: Стабильный обработчик для PriceRangeSlider
+  const handlePriceRangeChange = useCallback((value) => {
+    setFilters(prev => ({ ...prev, priceRange: value }))
+  }, [])
+
+  // ИСПРАВЛЕНО: Мемоизированная проверка активных фильтров
+  const hasActiveFilters = useMemo(() => {
+    const maxPrice = maxPriceFromData + 500
+    return filters.bedrooms || 
+           filters.district || 
+           (filters.priceRange && (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice))
+  }, [filters, maxPriceFromData])
+
+  // ИСПРАВЛЕНО: Мемоизированные опции для селектов
+  const bedroomSelectOptions = useMemo(() => [
     { value: '', label: 'All Bedrooms' },
     ...bedroomOptions.map(num => ({
       value: num.toString(),
       label: `${num} Bedroom${num > 1 ? 's' : ''}`
     }))
-  ]
+  ], [bedroomOptions])
 
-  const districtSelectOptions = [
+  const districtSelectOptions = useMemo(() => [
     { value: '', label: 'All Districts' },
     ...districts.map(district => ({
       value: district,
       label: district
     }))
-  ]
-
-  const maxPriceFromData = apartments.length > 0 ? Math.max(...apartments.map(apt => apt.priceNight)) : 4200
+  ], [districts])
 
   return (
     <motion.div
@@ -109,7 +144,7 @@ const Apartments = () => {
         {/* ПЕРЕРАБОТАННЫЕ Floating Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div 
-            className="absolute top-20 right-20 w-32 h-32 hidden sm:block"
+            className="absolute top-20 right-20 w-32 sm:w-32 h-32 sm:h-32 hidden sm:block"
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           >
@@ -181,14 +216,14 @@ const Apartments = () => {
         </div>
       </section>
 
-      {/* ИСПРАВЛЕН: Advanced Filters с правильным z-index */}
-      <section className="py-8 sm:py-12 bg-white/80 backdrop-blur-sm border-b border-gray-100/50 sticky top-20 sm:top-24" style={{ zIndex: 45 }}>
+      {/* ИСПРАВЛЕНО: Filters без sticky - теперь просто статичная секция */}
+      <section className="py-8 sm:py-12 bg-white/80 backdrop-blur-sm border-b border-gray-100/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Mobile Filter Toggle */}
           <div className="lg:hidden mb-4">
             <motion.button
               onClick={() => setShowFilters(!showFilters)}
-              className="luxury-card rounded-2xl p-4 w-full flex items-center justify-between"
+              className="filters-card rounded-2xl p-4 w-full flex items-center justify-between"
               whileTap={{ scale: 0.98 }}
             >
               <div className="flex items-center space-x-3">
@@ -211,7 +246,7 @@ const Apartments = () => {
             </motion.button>
           </div>
 
-          {/* ИСПРАВЛЕН: Filters Container */}
+          {/* ИСПРАВЛЕН: Filters Container без sticky */}
           <motion.div
             initial={false}
             animate={showFilters || window.innerWidth >= 1024 ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
@@ -222,7 +257,7 @@ const Apartments = () => {
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6 }}
-              className="luxury-card rounded-3xl p-6 sm:p-8"
+              className="filters-card rounded-3xl p-6 sm:p-8"
             >
               <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
                 {/* ИСПРАВЛЕН: Filter Controls с правильными z-index */}
@@ -231,7 +266,7 @@ const Apartments = () => {
                   <div className="w-full xl:w-auto xl:min-w-[180px]" style={{ zIndex: 44 }}>
                     <CustomSelect
                       value={filters.bedrooms}
-                      onChange={(value) => setFilters({...filters, bedrooms: value})}
+                      onChange={handleBedroomsChange}
                       options={bedroomSelectOptions}
                       label="Bedrooms"
                       placeholder="All Bedrooms"
@@ -242,18 +277,18 @@ const Apartments = () => {
                   <div className="w-full xl:w-auto xl:min-w-[180px]" style={{ zIndex: 43 }}>
                     <CustomSelect
                       value={filters.district}
-                      onChange={(value) => setFilters({...filters, district: value})}
+                      onChange={handleDistrictChange}
                       options={districtSelectOptions}
                       label="District"
                       placeholder="All Districts"
                     />
                   </div>
 
-                  {/* НОВОЕ: Price Range Slider вместо dropdown */}
+                  {/* ИСПРАВЛЕНО: PriceRangeSlider с оптимизированными props */}
                   <div className="w-full xl:w-auto xl:min-w-[280px]" style={{ zIndex: 42 }}>
                     <PriceRangeSlider
                       value={filters.priceRange}
-                      onChange={(value) => setFilters({...filters, priceRange: value})}
+                      onChange={handlePriceRangeChange}
                       min={0}
                       max={maxPriceFromData + 500}
                       step={100}
@@ -377,7 +412,7 @@ const Apartments = () => {
       </section>
 
       {/* Apartments Grid */}
-      <section className="py-12 sm:py-20">
+      <section className="py-6 sm:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatePresence mode="wait">
             {loading ? (

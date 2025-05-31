@@ -4,36 +4,105 @@ import { motion, AnimatePresence } from 'framer-motion'
 const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
   useEffect(() => {
     if (isOpen) {
-      // ИСПРАВЛЕНО: Сохраняем текущую позицию скролла
+      // ИСПРАВЛЕНО: Улучшенная система блокировки скролла с предотвращением горизонтального скролла
       const scrollY = window.scrollY
-      document.body.style.overflow = 'hidden'
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.width = '100%'
-      document.body.style.left = '0'
-      document.body.style.right = '0'
-    } else {
-      // ИСПРАВЛЕНО: Восстанавливаем позицию скролла
-      const scrollY = document.body.style.top
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-      document.body.style.left = ''
-      document.body.style.right = ''
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1)
+      const body = document.body
+      const html = document.documentElement
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+      
+      // Сохраняем оригинальные стили
+      const originalStyles = {
+        bodyOverflow: body.style.overflow,
+        bodyOverflowX: body.style.overflowX,
+        bodyOverflowY: body.style.overflowY,
+        bodyPosition: body.style.position,
+        bodyTop: body.style.top,
+        bodyLeft: body.style.left,
+        bodyRight: body.style.right,
+        bodyWidth: body.style.width,
+        bodyPaddingRight: body.style.paddingRight,
+        htmlOverflowX: html.style.overflowX
       }
+      
+      // КРИТИЧНО: Блокируем горизонтальный скролл на всех уровнях
+      html.style.overflowX = 'hidden'
+      body.style.overflow = 'hidden'
+      body.style.overflowX = 'hidden'
+      body.style.overflowY = 'hidden'
+      body.style.position = 'fixed'
+      body.style.top = `-${scrollY}px`
+      body.style.left = '0'
+      body.style.right = '0'
+      body.style.width = '100%'
+      body.style.paddingRight = `${scrollbarWidth}px`
+      
+      // Сохраняем данные для восстановления
+      body.dataset.scrollY = scrollY.toString()
+      body.dataset.originalStyles = JSON.stringify(originalStyles)
+    } else {
+      // ИСПРАВЛЕНО: Плавное восстановление позиции скролла
+      const body = document.body
+      const html = document.documentElement
+      const scrollY = parseInt(body.dataset.scrollY || '0')
+      const originalStyles = JSON.parse(body.dataset.originalStyles || '{}')
+      
+      // Восстанавливаем стили
+      html.style.overflowX = originalStyles.htmlOverflowX || ''
+      body.style.overflow = originalStyles.bodyOverflow || ''
+      body.style.overflowX = originalStyles.bodyOverflowX || ''
+      body.style.overflowY = originalStyles.bodyOverflowY || ''
+      body.style.position = originalStyles.bodyPosition || ''
+      body.style.top = originalStyles.bodyTop || ''
+      body.style.left = originalStyles.bodyLeft || ''
+      body.style.right = originalStyles.bodyRight || ''
+      body.style.width = originalStyles.bodyWidth || ''
+      body.style.paddingRight = originalStyles.bodyPaddingRight || ''
+      
+      // Плавно возвращаемся к позиции скролла
+      if (scrollY > 0) {
+        // Используем smooth скролл вместо мгновенного прыжка
+        window.scrollTo({
+          top: scrollY,
+          left: 0,
+          behavior: 'smooth'
+        })
+      }
+      
+      // Очищаем временные данные
+      delete body.dataset.scrollY
+      delete body.dataset.originalStyles
     }
 
     return () => {
       // Cleanup на всякий случай
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-      document.body.style.left = ''
-      document.body.style.right = ''
+      const body = document.body
+      const html = document.documentElement
+      if (body.dataset.scrollY) {
+        const scrollY = parseInt(body.dataset.scrollY || '0')
+        const originalStyles = JSON.parse(body.dataset.originalStyles || '{}')
+        
+        html.style.overflowX = originalStyles.htmlOverflowX || ''
+        body.style.overflow = originalStyles.bodyOverflow || ''
+        body.style.overflowX = originalStyles.bodyOverflowX || ''
+        body.style.overflowY = originalStyles.bodyOverflowY || ''
+        body.style.position = originalStyles.bodyPosition || ''
+        body.style.top = originalStyles.bodyTop || ''
+        body.style.left = originalStyles.bodyLeft || ''
+        body.style.right = originalStyles.bodyRight || ''
+        body.style.width = originalStyles.bodyWidth || ''
+        body.style.paddingRight = originalStyles.bodyPaddingRight || ''
+        
+        if (scrollY > 0) {
+          window.scrollTo({
+            top: scrollY,
+            left: 0,
+            behavior: 'smooth'
+          })
+        }
+        
+        delete body.dataset.scrollY
+        delete body.dataset.originalStyles
+      }
     }
   }, [isOpen])
 
@@ -53,19 +122,31 @@ const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
     }
   }, [isOpen, onClose])
 
+  // ИСПРАВЛЕНО: Безопасные размеры без горизонтального overflow
   const sizeClasses = {
-    sm: 'w-full max-w-md',
-    md: 'w-full max-w-lg',
-    lg: 'w-full max-w-2xl',
-    xl: 'w-full max-w-4xl',
-    full: 'w-[95vw] max-w-[95vw] max-h-[95vh]'
+    sm: 'w-full max-w-[90vw] sm:max-w-md',
+    md: 'w-full max-w-[90vw] sm:max-w-lg',
+    lg: 'w-full max-w-[90vw] sm:max-w-2xl',
+    xl: 'w-full max-w-[90vw] sm:max-w-4xl',
+    full: 'w-[90vw] max-w-[90vw] max-h-[90vh]'
   }
 
   return (
     <AnimatePresence>
       {isOpen && (
-        // ИСПРАВЛЕНО: Правильный z-index для модального окна
-        <div className="fixed inset-0 overflow-hidden" style={{ zIndex: 9999 }}>
+        // ИСПРАВЛЕНО: Правильный z-index и блокировка горизонтального скролла
+        <div 
+          className="fixed inset-0"
+          style={{ 
+            zIndex: 9999,
+            // КРИТИЧНО: Блокируем любой overflow на уровне модального контейнера
+            overflow: 'hidden',
+            width: '100vw',
+            height: '100vh',
+            maxWidth: '100vw',
+            maxHeight: '100vh'
+          }}
+        >
           {/* Premium Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -76,19 +157,36 @@ const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
             className="fixed inset-0 bg-black/70 backdrop-blur-sm"
             style={{
               background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%)',
-              zIndex: 9999
+              zIndex: 9999,
+              width: '100vw',
+              height: '100vh',
+              overflow: 'hidden'
             }}
           />
 
-          {/* ИСПРАВЛЕН: Modal Container с контролем overflow */}
+          {/* ИСПРАВЛЕН: Modal Container с безопасными размерами */}
           <div 
-            className="fixed inset-0 flex items-center justify-center p-2 sm:p-4"
+            className="fixed inset-0 flex items-center justify-center"
             style={{ 
               zIndex: 10000,
-              overflow: 'hidden' // ИСПРАВЛЕНО: предотвращаем overflow
+              padding: 'clamp(0.5rem, 2vw, 1rem)', // Адаптивный padding
+              width: '100vw',
+              height: '100vh',
+              maxWidth: '100vw',
+              maxHeight: '100vh',
+              overflow: 'hidden', // КРИТИЧНО: Блокируем overflow
+              boxSizing: 'border-box'
             }}
           >
-            <div className="w-full h-full flex items-center justify-center min-h-full py-4 overflow-y-auto">
+            {/* ИСПРАВЛЕНО: Scrollable wrapper с безопасными размерами */}
+            <div 
+              className="w-full h-full flex items-center justify-center overflow-y-auto overflow-x-hidden custom-scrollbar"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -99,13 +197,21 @@ const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
                   damping: 25,
                   stiffness: 500
                 }}
-                className={`${sizeClasses[size]} bg-white rounded-3xl shadow-luxury overflow-hidden max-h-[90vh] flex flex-col mx-2 sm:mx-4 relative`}
+                className={`${sizeClasses[size]} bg-white rounded-3xl shadow-luxury my-4 relative`}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  maxWidth: size === 'xl' ? 'min(56rem, 90vw)' : undefined,
+                  // КРИТИЧНО: Строгий контроль размеров
+                  maxWidth: size === 'xl' ? 'min(56rem, 90vw)' : 
+                           size === 'lg' ? 'min(32rem, 90vw)' :
+                           size === 'md' ? 'min(28rem, 90vw)' :
+                           size === 'sm' ? 'min(24rem, 90vw)' : '90vw',
                   width: '100%',
-                  // ИСПРАВЛЕНО: Строгий контроль размеров
-                  boxSizing: 'border-box'
+                  maxHeight: '90vh',
+                  minHeight: 'auto',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden' // КРИТИЧНО: Блокируем overflow на уровне модала
                 }}
               >
                 {/* Decorative Top Border */}
@@ -113,10 +219,10 @@ const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
                 
                 {/* Header */}
                 {title && (
-                  <div className="relative px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-gray-100 flex-shrink-0 bg-white overflow-hidden">
+                  <div className="relative px-4 sm:px-6 py-4 sm:py-6 border-b border-gray-100 flex-shrink-0 bg-white overflow-hidden rounded-t-3xl">
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0 pr-4">
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-playfair font-semibold text-gray-900 mb-2 break-words leading-tight">
+                        <h2 className="text-lg sm:text-xl lg:text-2xl font-playfair font-semibold text-gray-900 mb-2 break-words leading-tight">
                           {title}
                         </h2>
                         <div className="w-16 h-1 bg-gradient-to-r from-dubai-gold to-dubai-gold-light rounded-full"></div>
@@ -136,27 +242,41 @@ const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
                   </div>
                 )}
 
-                {/* ИСПРАВЛЕН: Content с правильным overflow контролем */}
-                <div className={`${title ? 'p-4 sm:p-6 lg:p-8' : 'p-4 sm:p-6 lg:p-10'} flex-1 bg-white relative`}
-                     style={{
-                       overflow: 'hidden', // ИСПРАВЛЕНО: предотвращаем overflow на уровне контейнера
-                       maxHeight: title ? 'calc(90vh - 120px)' : 'calc(90vh - 80px)'
-                     }}>
+                {/* ИСПРАВЛЕН: Content с безопасным скроллом */}
+                <div 
+                  className={`${title ? 'p-4 sm:p-6' : 'p-4 sm:p-6'} flex-1 bg-white relative overflow-y-auto overflow-x-hidden custom-scrollbar`}
+                  style={{
+                    minHeight: 0, // Позволяет flex-item сжиматься
+                    maxHeight: 'none', // Убираем строгое ограничение высоты
+                    width: '100%',
+                    maxWidth: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                >
                   {/* Background Decoration */}
-                  <div className="absolute top-0 right-0 w-24 sm:w-32 lg:w-40 h-24 sm:h-32 lg:h-40 bg-gradient-to-br from-dubai-gold/5 to-transparent rounded-full -mr-12 sm:-mr-16 lg:-mr-20 -mt-12 sm:-mt-16 lg:-mt-20 pointer-events-none"></div>
-                  <div className="absolute bottom-0 left-0 w-20 sm:w-24 lg:w-32 h-20 sm:h-24 lg:h-32 bg-gradient-to-tr from-dubai-gold/3 to-transparent rounded-full -ml-10 sm:-ml-12 lg:-ml-16 -mb-10 sm:-mb-12 lg:-mb-16 pointer-events-none"></div>
+                  <div className="absolute top-0 right-0 w-20 sm:w-32 h-20 sm:h-32 bg-gradient-to-br from-dubai-gold/5 to-transparent rounded-full -mr-10 sm:-mr-16 -mt-10 sm:-mt-16 pointer-events-none"></div>
+                  <div className="absolute bottom-0 left-0 w-16 sm:w-24 h-16 sm:h-24 bg-gradient-to-tr from-dubai-gold/3 to-transparent rounded-full -ml-8 sm:-ml-12 -mb-8 sm:-mb-12 pointer-events-none"></div>
                   
-                  {/* ИСПРАВЛЕН: Content Container с внутренним скроллом */}
+                  {/* ИСПРАВЛЕН: Content Container с безопасными размерами */}
                   <div 
-                    className="relative z-10 w-full h-full overflow-y-auto custom-scrollbar"
+                    className="relative z-10 w-full"
                     style={{
-                      // ИСПРАВЛЕНО: Строгий контроль размеров внутреннего контента
                       maxWidth: '100%',
-                      maxHeight: '100%',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      overflow: 'visible' // Позволяем контенту быть видимым, но контролируем размеры
                     }}
                   >
-                    <div className="w-full max-w-full break-words">
+                    {/* ОБЕРТКА для безопасности контента */}
+                    <div 
+                      className="w-full"
+                      style={{
+                        maxWidth: '100%',
+                        overflow: 'hidden', // Скрываем любой горизонтальный overflow контента
+                        boxSizing: 'border-box',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word'
+                      }}
+                    >
                       {children}
                     </div>
                   </div>

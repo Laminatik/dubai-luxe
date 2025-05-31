@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
+import LuxuryIcon from '../components/UI/LuxuryIcon'
 
 const Home = () => {
   const [apartments, setApartments] = useState([])
@@ -310,7 +311,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Premium Stats */}
+      {/* Premium Stats - ОБНОВЛЕНО с иконками */}
       <section ref={statsRef} className="py-16 sm:py-24 bg-black text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
         <div className="absolute inset-0" style={{
@@ -321,10 +322,10 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {[
-              { number: '50+', label: 'Luxury Properties', icon: '🏛️' },
-              { number: '5★', label: 'Average Rating', icon: '⭐' },
-              { number: '1000+', label: 'Distinguished Guests', icon: '👑' },
-              { number: '24/7', label: 'Concierge Excellence', icon: '🎩' }
+              { number: '50+', label: 'Luxury Properties', icon: 'temple' },
+              { number: '5★', label: 'Average Rating', icon: 'star' },
+              { number: '1000+', label: 'Distinguished Guests', icon: 'crown' },
+              { number: '24/7', label: 'Concierge Excellence', icon: 'hat' }
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -334,9 +335,22 @@ const Home = () => {
                 className="text-center group"
               >
                 <div className="luxury-glass rounded-2xl p-4 sm:p-8 hover:bg-white/5 transition-all duration-500">
-                  <div className="text-2xl sm:text-4xl mb-2 sm:mb-4 filter group-hover:scale-110 transition-transform duration-500">
-                    {stat.icon}
-                  </div>
+                  <motion.div 
+                    className="mb-2 sm:mb-4 group-hover:scale-110 transition-transform duration-500 flex justify-center"
+                    whileHover={{ scale: 1.1 }}
+                  >
+                    <LuxuryIcon 
+                      name={stat.icon} 
+                      size="stats"
+                      className="opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                      alt={`${stat.label} icon`}
+                      fallback={
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-dubai-gold/20 rounded-full flex items-center justify-center">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-dubai-gold/40 rounded-full"></div>
+                        </div>
+                      }
+                    />
+                  </motion.div>
                   <div className="text-2xl sm:text-4xl md:text-5xl font-playfair font-bold text-dubai-gold mb-2 sm:mb-3 group-hover:scale-105 transition-transform duration-500">
                     {stat.number}
                   </div>
@@ -348,7 +362,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Luxury Experience Section */}
+      {/* Luxury Experience Section - ОБНОВЛЕНО с иконками */}
       <section ref={experienceRef} className="py-16 sm:py-32 premium-section-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-20">
@@ -371,17 +385,17 @@ const Home = () => {
               {
                 title: 'Curated Excellence',
                 description: 'Every property personally selected and maintained to the highest standards of luxury.',
-                icon: '💎'
+                icon: 'diamond'
               },
               {
                 title: 'Bespoke Service',
                 description: 'Personalized concierge services tailored to your unique preferences and desires.',
-                icon: '🎭'
+                icon: 'mask'
               },
               {
                 title: 'Exclusive Access',
                 description: 'Private events, hidden gems, and experiences unavailable to the general public.',
-                icon: '🗝️'
+                icon: 'key'
               }
             ].map((feature, index) => (
               <motion.div
@@ -391,9 +405,22 @@ const Home = () => {
                 transition={{ duration: 0.8, delay: 0.7 + index * 0.2 }}
                 className="text-center luxury-card rounded-2xl p-6 sm:p-10 hover:transform hover:-translate-y-2 transition-all duration-500 group"
               >
-                <div className="text-4xl sm:text-6xl mb-4 sm:mb-6 filter group-hover:scale-110 transition-transform duration-500">
-                  {feature.icon}
-                </div>
+                <motion.div 
+                  className="mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-500 flex justify-center"
+                  whileHover={{ scale: 1.1 }}
+                >
+                  <LuxuryIcon 
+                    name={feature.icon} 
+                    size="hero"
+                    className="opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                    alt={`${feature.title} icon`}
+                    fallback={
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-dubai-gold/20 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-dubai-gold/40 rounded-full"></div>
+                      </div>
+                    }
+                  />
+                </motion.div>
                 <h3 className="text-xl sm:text-2xl font-playfair font-semibold mb-4 text-gray-800">
                   {feature.title}
                 </h3>

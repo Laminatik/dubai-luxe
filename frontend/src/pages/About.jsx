@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
+import LuxuryIcon from '../components/UI/LuxuryIcon'
 
 const About = () => {
   const [heroRef, heroInView] = useInView({ threshold: 0.2, triggerOnce: true })
@@ -250,7 +251,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Values - ИСПРАВЛЕННАЯ СЕКЦИЯ */}
+      {/* Values - ОБНОВЛЕНО с иконками */}
       <section ref={valuesRef} className="py-16 sm:py-32 bg-black text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
         
@@ -278,19 +279,19 @@ const About = () => {
               {
                 title: 'Uncompromising Excellence',
                 description: 'Every detail meticulously crafted to exceed the highest expectations of luxury and refinement.',
-                icon: '👑',
+                icon: 'crown',
                 accent: 'from-dubai-gold to-dubai-gold-light'
               },
               {
                 title: 'Authentic Experiences',
                 description: 'Genuine cultural immersion that reveals Dubai\'s hidden treasures and timeless elegance.',
-                icon: '🏛️',
+                icon: 'temple2',
                 accent: 'from-dubai-gold-light to-dubai-gold'
               },
               {
                 title: 'Innovation Leadership',
                 description: 'Pioneering new standards in luxury hospitality through technology and personalized service.',
-                icon: '✨',
+                icon: 'innovation',
                 accent: 'from-dubai-gold to-dubai-gold-dark'
               }
             ].map((value, index) => (
@@ -301,9 +302,22 @@ const About = () => {
                 transition={{ duration: 0.8, delay: index * 0.2 }}
                 className="luxury-glass rounded-3xl p-6 sm:p-10 hover:transform hover:-translate-y-4 transition-all duration-700 group text-center border border-white/10"
               >
-                <div className="text-4xl sm:text-7xl mb-6 sm:mb-8 filter group-hover:scale-110 transition-transform duration-500">
-                  {value.icon}
-                </div>
+                <motion.div 
+                  className="mb-6 sm:mb-8 group-hover:scale-110 transition-transform duration-500 flex justify-center"
+                  whileHover={{ scale: 1.1 }}
+                >
+                  <LuxuryIcon 
+                    name={value.icon} 
+                    size="hero"
+                    className="opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                    alt={`${value.title} icon`}
+                    fallback={
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-dubai-gold/20 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-dubai-gold/40 rounded-full"></div>
+                      </div>
+                    }
+                  />
+                </motion.div>
                 <h3 className={`text-xl sm:text-2xl font-playfair font-semibold mb-4 sm:mb-6 bg-gradient-to-r ${value.accent} bg-clip-text text-transparent`}>
                   {value.title}
                 </h3>
@@ -388,7 +402,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Awards & Recognition - ИСПРАВЛЕННАЯ СЕКЦИЯ */}
+      {/* Awards & Recognition - ОБНОВЛЕНО с иконками */}
       <section ref={awardsRef} className="py-16 sm:py-32 bg-black text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
         
@@ -410,22 +424,22 @@ const About = () => {
                 {
                   award: 'Best Luxury Rental Agency',
                   year: 'Dubai Tourism Awards 2024',
-                  icon: '🏆'
+                  icon: 'crown'
                 },
                 {
                   award: 'Excellence in Guest Experience',
                   year: 'Hospitality Excellence Awards 2024',
-                  icon: '⭐'
+                  icon: 'star'
                 },
                 {
                   award: 'Top 10 Boutique Hospitality',
                   year: 'Middle East Luxury Awards 2023',
-                  icon: '🥇'
+                  icon: 'crown'
                 },
                 {
                   award: 'Sustainable Luxury Initiative',
                   year: 'Green Tourism Recognition 2023',
-                  icon: '🌿'
+                  icon: 'innovation'
                 }
               ].map((award, index) => (
                 <motion.div
@@ -435,9 +449,22 @@ const About = () => {
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className="luxury-glass p-6 sm:p-8 rounded-3xl border border-dubai-gold/20 hover:border-dubai-gold/40 transition-all duration-500 group"
                 >
-                  <div className="text-3xl sm:text-5xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-500">
-                    {award.icon}
-                  </div>
+                  <motion.div 
+                    className="mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-500 flex justify-center"
+                    whileHover={{ scale: 1.1 }}
+                  >
+                    <LuxuryIcon 
+                      name={award.icon} 
+                      size="xl"
+                      className="opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                      alt={`${award.award} icon`}
+                      fallback={
+                        <div className="w-16 h-16 bg-dubai-gold/20 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 bg-dubai-gold/40 rounded-full"></div>
+                        </div>
+                      }
+                    />
+                  </motion.div>
                   <h3 className="text-lg sm:text-xl font-playfair font-semibold text-dubai-gold mb-3">
                     "{award.award}"
                   </h3>

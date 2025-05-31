@@ -13,7 +13,6 @@ const ApartmentDetails = () => {
   const [loading, setLoading] = useState(true)
   const [showReservationModal, setShowReservationModal] = useState(false)
   const [showMobileButton, setShowMobileButton] = useState(true)
-  const [sidebarPosition, setSidebarPosition] = useState('static') // static, sticky, absolute
   const sidebarRef = useRef(null)
   const contentRef = useRef(null)
   const containerRef = useRef(null)
@@ -61,38 +60,6 @@ const ApartmentDetails = () => {
     }
   }, [loading])
 
-  // ИСПРАВЛЕН: Правильная логика для sticky sidebar без заезжания
-  useEffect(() => {
-    if (loading) return
-
-    const handleScroll = () => {
-      if (!containerRef.current || !sidebarRef.current || !contentRef.current) return
-
-      const containerRect = containerRef.current.getBoundingClientRect()
-      const contentRect = contentRef.current.getBoundingClientRect()
-      const sidebarHeight = sidebarRef.current.offsetHeight
-      const headerHeight = 112 // высота header
-      const topOffset = 32 // отступ сверху
-
-      // ИСПРАВЛЕНО: Определяем три состояния sidebar
-      if (containerRect.top > headerHeight + topOffset) {
-        // Контейнер еще не достиг sticky позиции
-        setSidebarPosition('static')
-      } else if (contentRect.bottom > headerHeight + topOffset + sidebarHeight + 50) {
-        // Контент еще достаточно длинный для sticky
-        setSidebarPosition('sticky')  
-      } else {
-        // Контент заканчивается, фиксируем sidebar внизу
-        setSidebarPosition('absolute')
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    handleScroll() // Initial call
-
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [loading])
-
   if (loading) return <LoadingSpinner />
   if (!apartment) return null
 
@@ -101,16 +68,17 @@ const ApartmentDetails = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-white overflow-x-hidden"
+      // КРИТИЧНО: Убран overflow-x-hidden! Он ломал position: sticky
+      className="min-h-screen bg-white"
     >
       {/* Gallery */}
       <ApartmentGallery images={apartment.gallery} />
 
-      {/* ИСПРАВЛЕН: Details Container */}
+      {/* Details Container */}
       <div ref={containerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 relative">
           {/* Main Content */}
-          <div ref={contentRef} className="lg:col-span-2 overflow-hidden">
+          <div ref={contentRef} className="lg:col-span-2">
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -281,20 +249,23 @@ const ApartmentDetails = () => {
             </motion.div>
           </div>
 
-          {/* ИСПРАВЛЕН: Правильный Floating Sidebar */}
+          {/* ИСПРАВЛЕН: Sticky Sidebar без overflow конфликтов */}
           <div className="lg:col-span-1 hidden lg:block">
             <motion.div
               ref={sidebarRef}
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.5 }}
-              className={`transition-all duration-500 ease-out z-sidebar ${
-                sidebarPosition === 'sticky' ? 'sticky top-28' : 
-                sidebarPosition === 'absolute' ? 'absolute bottom-0' : 
-                'relative'
-              }`}
+              className="sticky top-28 z-sidebar"
+              style={{
+                // ИСПРАВЛЕНО: Простое sticky поведение
+                // Теперь работает корректно без overflow: hidden конфликтов
+                position: 'sticky',
+                top: '7rem', // 28 * 0.25rem = 7rem = 112px
+                zIndex: 30
+              }}
             >
-              {/* ИСПРАВЛЕНА: Sidebar карточка с правильным поведением */}
+              {/* Sidebar карточка */}
               <div className="bg-white border border-gray-100 rounded-3xl p-8 shadow-lg overflow-hidden max-w-sm mx-auto">
                 <div className="text-center mb-8">
                   <div className="text-3xl font-bold gold-gradient-text mb-3">
