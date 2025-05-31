@@ -1,23 +1,13 @@
 {
-  "name": "dubai-luxe",
+  "name": "dubai-luxe-vercel",
   "version": "1.0.0",
-  "description": "Luxury Dubai Apartment Rental Website",
-  "main": "index.js",
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
+  "description": "Luxury Dubai Apartment Rental Website for Vercel",
   "scripts": {
-    "install-all": "npm install -w frontend -w backend",
-    "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
-    "build": "npm run build -w frontend",
-    "start": "npm start -w backend",
-    "test": "npm test -w frontend && npm test -w backend"
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "preview": "cd frontend && npm run preview"
   },
-  "keywords": ["dubai", "luxury", "apartments", "rental"],
+  "keywords": ["dubai", "luxury", "apartments", "rental", "vercel"],
   "author": "Dubai Luxe",
-  "license": "MIT",
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  }
+  "license": "MIT"
 }

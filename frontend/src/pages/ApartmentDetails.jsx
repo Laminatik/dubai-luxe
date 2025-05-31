@@ -17,8 +17,9 @@ const ApartmentDetails = () => {
   const contentRef = useRef(null)
   const containerRef = useRef(null)
 
+  // ОБНОВЛЕНО: fetch для Vercel API
   useEffect(() => {
-    fetch(`/api/apartments/${slug}`)
+    fetch(`/api/apartments?slug=${slug}`)
       .then(res => {
         if (!res.ok) throw new Error('Apartment not found')
         return res.json()
@@ -68,7 +69,6 @@ const ApartmentDetails = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      // КРИТИЧНО: Убран overflow-x-hidden! Он ломал position: sticky
       className="min-h-screen bg-white"
     >
       {/* Gallery */}
@@ -249,7 +249,7 @@ const ApartmentDetails = () => {
             </motion.div>
           </div>
 
-          {/* ИСПРАВЛЕН: Sticky Sidebar без overflow конфликтов */}
+          {/* Sticky Sidebar */}
           <div className="lg:col-span-1 hidden lg:block">
             <motion.div
               ref={sidebarRef}
@@ -258,14 +258,11 @@ const ApartmentDetails = () => {
               transition={{ duration: 0.8, delay: 0.5 }}
               className="sticky top-28 z-sidebar"
               style={{
-                // ИСПРАВЛЕНО: Простое sticky поведение
-                // Теперь работает корректно без overflow: hidden конфликтов
                 position: 'sticky',
-                top: '7rem', // 28 * 0.25rem = 7rem = 112px
+                top: '7rem',
                 zIndex: 30
               }}
             >
-              {/* Sidebar карточка */}
               <div className="bg-white border border-gray-100 rounded-3xl p-8 shadow-lg overflow-hidden max-w-sm mx-auto">
                 <div className="text-center mb-8">
                   <div className="text-3xl font-bold gold-gradient-text mb-3">

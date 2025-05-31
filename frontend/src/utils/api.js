@@ -62,13 +62,13 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 }
 
-// API methods
+// API methods for Vercel
 export const api = {
   // Get all apartments
   getApartments: () => apiRequest('/apartments'),
 
-  // Get apartment by slug
-  getApartment: (slug) => apiRequest(`/apartments/${slug}`),
+  // Get apartment by slug (updated for Vercel)
+  getApartment: (slug) => apiRequest(`/apartments?slug=${slug}`),
 
   // Submit reservation
   submitReservation: (data) => apiRequest('/reservations', {
